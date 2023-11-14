@@ -1,0 +1,29 @@
+sector .config
+  fields mariebuild:
+    str binname 'lint.bin'
+
+    str asm 'nasm'
+    str ld  'x86_64-elf-ld'
+
+    list files 'header:lint'
+    
+    str std_flags '-f elf64'
+    str ld_flags '--nmagic --output=obj/$(binname) --script=link.ld'
+
+    str comp_cmd '$(asm) $(std_flags) $(file).s -o obj/$(file).o'
+    str finalize_cmd '$(ld) $(ld_flags) obj/$(files).o'
+
+sector .scripts
+  lines prepare:
+#!/bin/bash
+if [[ -d obj ]]; then
+  rm obj/*.o
+else
+  mkdir obj
+fi
+
+  lines gendemo:
+#!/bin/bash
+mb -n
+cp obj/lint.bin isofiles/boot/
+grub-mkrescue -o os.iso isofiles
