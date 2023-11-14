@@ -5,7 +5,7 @@ sector .config
     str asm 'nasm'
     str ld  'x86_64-elf-ld'
 
-    list files 'header:lint'
+    list files 'header:lint:test_kernel'
     
     str std_flags '-f elf64'
     str ld_flags '--nmagic --output=obj/$(binname) --script=link.ld'

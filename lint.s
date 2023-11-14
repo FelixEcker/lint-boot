@@ -1,4 +1,9 @@
+; lint bootloader; lint.s
+; generic and simple x86-64 bootloader
+; https://github.com/FelixEcker/lint-boot
+
 global start
+extern kernel_start
 
 section .text
 bits 32
@@ -6,20 +11,17 @@ start:
   mov esp, stack_top
 
   call setup_paging
+  lgdt [gdt64.pointer]
+
+  ; long mode start
+  ; update selectors
+  mov ax, gdt64.data
+  mov ss, ax
+  mov ds, ax
+  mov es, ax
+
+  jmp gdt64.code:kernel_start
   
-  mov word [0xb8000], 0x0248 ; H
-  mov word [0xb8002], 0x0265 ; e
-  mov word [0xb8004], 0x026c ; l
-  mov word [0xb8006], 0x026c ; l
-  mov word [0xb8008], 0x026f ; o
-  mov word [0xb800a], 0x022c ; ,
-  mov word [0xb800c], 0x0220 ;
-  mov word [0xb800e], 0x0277 ; w
-  mov word [0xb8010], 0x026f ; o
-  mov word [0xb8012], 0x0272 ; r
-  mov word [0xb8014], 0x026c ; l
-  mov word [0xb8016], 0x0264 ; d
-  mov word [0xb8018], 0x0221 ; !
   hlt
 
 setup_paging:
@@ -82,3 +84,14 @@ p2_table:
 stack_bottom:
   resb 4096 * 4
 stack_top:
+
+section .rodata
+gdt64:
+    dq 0
+.code: equ $ - gdt64
+    dq (1<<44) | (1<<47) | (1<<41) | (1<<43) | (1<<53)
+.data: equ $ - gdt64
+    dq (1<<44) | (1<<47) | (1<<41)
+.pointer:
+    dw .pointer - gdt64 - 1
+    dq gdt64
